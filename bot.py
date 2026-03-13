@@ -11,7 +11,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import FSInputFile
 
 # --- KONFIGURATSIYA ---
-API_TOKEN = "8773028400:AAGBWrajqsRhTqp3nYsLTTaTtfRqGAHkyyY"
+API_TOKEN = "8706280166:AAEmcO6qKAhy6RcZMlzXkU4tFN2m7RYkR7o"
 ADMIN_ID = 6774058619
 LOG_GROUP_ID = -1003225370008
 
@@ -202,7 +202,7 @@ async def recheck_sub(call: types.CallbackQuery, state: FSMContext):
 # --- OVOZ BERISH MANTIQI ---
 @dp.message(F.text == "🗳 Ovoz berish")
 async def vote_step_1(message: types.Message, state: FSMContext):
-    await message.answer("📞 Ovoz berish uchun telefon raqamingizni kiriting\n(Masalan: 998901234567):",
+    await message.answer("📞 Ovoz berish uchun telefon raqamingizni kiriting\n(Masalan: 901234567):",
                          reply_markup=ReplyKeyboardBuilder().button(text="🏠 Orqaga").as_markup(resize_keyboard=True))
     await state.set_state(UserStates.get_phone_for_vote)
 
@@ -220,7 +220,7 @@ async def vote_step_2(message: types.Message, state: FSMContext):
 
     await state.update_data(vote_phone=phone)
     kb = InlineKeyboardBuilder()
-    kb.button(text="🌐 Ovoz berish sahifasi", url=get_config('vote_link'))
+    kb.button(text="Ovoz berish ✅", url=get_config('vote_link'))
     kb.button(text="✅ Ovoz berdim", callback_data="voted_done")
     kb.adjust(1)
 
@@ -611,5 +611,4 @@ async def main():
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
-
     asyncio.run(main())
