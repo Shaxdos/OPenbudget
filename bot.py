@@ -16,8 +16,9 @@ from aiogram.exceptions import TelegramConflictError
 # --- KONFIGURATSIYA ---
 API_TOKEN = "8706280166:AAEmcO6qKAhy6RcZMlzXkU4tFN2m7RYkR7o"
 ADMIN_ID = 6774058619
-LOG_GROUP_ID = -1003225370008 # Guruh/Kanal ID (Ovozlar va To'lovlar uchun)
-# Google Drive videoni to'g'ridan-to'g'ri yuklab olish havolasiga aylantirilgan varianti
+LOG_GROUP_ID = -1003225370008
+
+# Google Drive videoni to'g'ridan-to'g'ri yuklab olish havolasi (uc?export=download)
 VIDEO_URL = "https://drive.google.com/uc?export=download&id=1xIr9s1K6Bq3H5Gpt6P5bG8kQb7lrMuF3"
 
 bot = Bot(token=API_TOKEN)
