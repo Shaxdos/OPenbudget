@@ -170,7 +170,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
     vid_id = get_config('video_file_id')
     
     try:
-        if vid_id:
+        if vid_id and vid_id.strip():
             await message.answer_video(video=vid_id, caption=start_msg, reply_markup=main_menu(u_id), parse_mode="HTML")
         else:
             await message.answer(start_msg, reply_markup=main_menu(u_id), parse_mode="HTML")
