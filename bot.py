@@ -12,7 +12,7 @@ from aiogram.types import FSInputFile
 
 # --- KONFIGURATSIYA ---
 API_TOKEN = "8773028400:AAGBWrajqsRhTqp3nYsLTTaTtfRqGAHkyyY"
-ADMIN_ID = 7957774091
+ADMIN_ID = 6774058619
 LOG_GROUP_ID = -1003225370008
 
 bot = Bot(token=API_TOKEN)
@@ -611,4 +611,5 @@ async def main():
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
+
     asyncio.run(main())
