@@ -183,7 +183,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
     try:
         if vid_id and vid_id != "":
             await message.answer_video(vid_id, caption=start_msg, reply_markup=main_menu(u_id), parse_mode="HTML")
-        elif os.path.exists("11.mp4"):
+        elif os.path.exists("/app/11.mp4"):
             msg = await message.answer_video(FSInputFile("11.mp4"), caption=start_msg, reply_markup=main_menu(u_id), parse_mode="HTML")
             set_config('start_video_id', msg.video.file_id)
         else:
