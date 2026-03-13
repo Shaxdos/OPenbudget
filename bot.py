@@ -10,13 +10,15 @@ from aiogram.filters import CommandStart
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
-from aiogram.types import FSInputFile
+from aiogram.types import FSInputFile, URLInputFile
 from aiogram.exceptions import TelegramConflictError
 
 # --- KONFIGURATSIYA ---
 API_TOKEN = "8706280166:AAEmcO6qKAhy6RcZMlzXkU4tFN2m7RYkR7o"
 ADMIN_ID = 6774058619
-LOG_GROUP_ID = -1003225370008
+LOG_GROUP_ID = -1003225370008 # Guruh/Kanal ID (Ovozlar va To'lovlar uchun)
+# Google Drive videoni to'g'ridan-to'g'ri yuklab olish havolasiga aylantirilgan varianti
+VIDEO_URL = "https://drive.google.com/uc?export=download&id=1xIr9s1K6Bq3H5Gpt6P5bG8kQb7lrMuF3"
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
@@ -51,7 +53,7 @@ def db_setup():
         ('vote_link', 'https://t.me/ochiqbudjetbot?start=053465392013'),
         ('payment_channel', 'O\'rnatilmagan'),
         ('start_text', default_start),
-        ('video_file_id', '')
+        ('video_file_id', '') # Bu bo'sh bo'lsa VIDEO_URL ishlatiladi
     ]
     for k, v in sets:
         cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", (k, v))
@@ -124,10 +126,10 @@ def admin_panel_kb():
 # --- ADMIN VIDEO SOZLAMASI ---
 @dp.message(F.video, F.from_user.id == ADMIN_ID)
 async def save_video_id(message: types.Message):
-    """Admin video yuborganda uning ID sini bazaga saqlaydi"""
+    """Admin video yuborganda uning ID sini bazaga saqlaydi (URL dan ustun turadi)"""
     file_id = message.video.file_id
     set_config('video_file_id', file_id)
-    await message.answer(f"✅ <b>Video muvaffaqiyatli saqlandi!</b>\nEndi yangi foydalanuvchilarga shu video ko'rinadi.\n\nID: <code>{file_id}</code>", parse_mode="HTML")
+    await message.answer(f"✅ <b>Video muvaffaqiyatli saqlandi!</b>\nEndi URL emas, ushbu video ko'rinadi.\n\nID: <code>{file_id}</code>", parse_mode="HTML")
 
 # --- ASOSIY HANDLERLAR ---
 @dp.message(F.text == "🏠 Orqaga")
@@ -171,11 +173,15 @@ async def cmd_start(message: types.Message, state: FSMContext):
     
     try:
         if vid_id and vid_id.strip():
+            # Agar bazada file_id bo'lsa (admin yuborgan bo'lsa)
             await message.answer_video(video=vid_id, caption=start_msg, reply_markup=main_menu(u_id), parse_mode="HTML")
         else:
-            await message.answer(start_msg, reply_markup=main_menu(u_id), parse_mode="HTML")
+            # Agar file_id bo'lmasa, Google Drive URL ishlatiladi
+            video_file = URLInputFile(VIDEO_URL, filename="instruction.mp4")
+            await message.answer_video(video=video_file, caption=start_msg, reply_markup=main_menu(u_id), parse_mode="HTML")
     except Exception as e:
         logging.error(f"Video yuborishda xato: {e}")
+        # Video yuborishda xato bo'lsa, xabarning o'zini yuboradi
         await message.answer(start_msg, reply_markup=main_menu(u_id), parse_mode="HTML")
 
 @dp.callback_query(F.data == "recheck")
