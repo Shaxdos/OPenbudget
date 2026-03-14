@@ -104,6 +104,7 @@ class UserStates(StatesGroup):
 
 class AdminState(StatesGroup):
     broadcast_text = State()
+    change_vote_link = State()
     add_ch_title = State()
     add_ch_url = State()
     add_ch_id = State()
@@ -119,9 +120,10 @@ def main_menu(user_id):
 
 def admin_panel_kb():
     kb = ReplyKeyboardBuilder()
-    kb.row(types.KeyboardButton(text="✉️ Oddiy xabar"), types.KeyboardButton(text="📄 Ulangan kanallar"))
-    kb.row(types.KeyboardButton(text="📢 Kanal ulash"), types.KeyboardButton(text="📊 Statistika"))
-    kb.row(types.KeyboardButton(text="🕒 Ovozlar tarixi"), types.KeyboardButton(text="🏠 Orqaga"))
+    kb.row(types.KeyboardButton(text="✉️ Xabar yuborish"), types.KeyboardButton(text="🔗 Ovoz linkini sozlash"))
+    kb.row(types.KeyboardButton(text="📄 Ulangan kanallar"), types.KeyboardButton(text="📢 Kanal ulash"))
+    kb.row(types.KeyboardButton(text="📊 Statistika"), types.KeyboardButton(text="🕒 Ovozlar tarixi"))
+    kb.row(types.KeyboardButton(text="🏠 Orqaga"))
     return kb.as_markup(resize_keyboard=True)
 
 # --- ADMIN VIDEO SOZLAMASI ---
@@ -369,24 +371,48 @@ async def vote_history_handler(message: types.Message):
     for t, n, p in rows: text += f"📅 {t}\n👤 {html.escape(n[:15])}... | 📞 {p}\n------------------------\n"
     await message.answer(text, parse_mode="HTML")
 
-@dp.message(F.text == "✉️ Oddiy xabar")
+@dp.message(F.text == "✉️ Xabar yuborish")
 async def broadcast_step_1(message: types.Message, state: FSMContext):
     if message.from_user.id == ADMIN_ID:
-        await message.answer("Xabarni yozing:", reply_markup=ReplyKeyboardBuilder().button(text="🏠 Orqaga").as_markup(resize_keyboard=True))
+        await message.answer("Yubormoqchi bo'lgan xabaringizni yozing, rasm yuboring yoki forward qiling:", reply_markup=ReplyKeyboardBuilder().button(text="🏠 Orqaga").as_markup(resize_keyboard=True))
         await state.set_state(AdminState.broadcast_text)
 
 @dp.message(AdminState.broadcast_text)
 async def broadcast_step_2(message: types.Message, state: FSMContext):
     if message.text == "🏠 Orqaga": return await admin_panel_handler(message)
+    
+    await message.answer("⏳ Xabarlar yuborilmoqda, iltimos kuting...")
     cursor.execute("SELECT user_id FROM users")
     users = cursor.fetchall()
     count = 0
     for (u_id,) in users:
         try: 
-            await bot.send_message(u_id, message.text, parse_mode="HTML")
+            # copy_message - oddiy matn, forward, rasm, video va hokazolarni asl holidek nusxalab yuboradi.
+            await bot.copy_message(chat_id=u_id, from_chat_id=message.chat.id, message_id=message.message_id)
             count += 1
+            await asyncio.sleep(0.05) # Telegram spam chekloviga tushmaslik uchun
         except: continue
-    await message.answer(f"✅ Xabar {count} ta foydalanuvchiga yuborildi.")
+    
+    await message.answer(f"✅ Xabar muvaffaqiyatli {count} ta foydalanuvchiga yuborildi.", reply_markup=admin_panel_kb())
+    await state.clear()
+
+@dp.message(F.text == "🔗 Ovoz linkini sozlash")
+async def change_link_step_1(message: types.Message, state: FSMContext):
+    if message.from_user.id == ADMIN_ID:
+        current = get_config('vote_link')
+        await message.answer(f"🔗 <b>Hozirgi havola:</b>\n{current}\n\n<i>Yangi havolani yuboring:</i>", reply_markup=ReplyKeyboardBuilder().button(text="🏠 Orqaga").as_markup(resize_keyboard=True), parse_mode="HTML")
+        await state.set_state(AdminState.change_vote_link)
+
+@dp.message(AdminState.change_vote_link)
+async def change_link_step_2(message: types.Message, state: FSMContext):
+    if message.text == "🏠 Orqaga": return await admin_panel_handler(message)
+    
+    new_link = message.text.strip()
+    if not new_link.startswith("http"):
+        return await message.answer("❌ Noto'g'ri format. Havola http yoki https bilan boshlanishi kerak.")
+        
+    set_config('vote_link', new_link)
+    await message.answer("✅ Ovoz berish havolasi muvaffaqiyatli o'zgartirildi!", reply_markup=admin_panel_kb())
     await state.clear()
 
 @dp.message(F.text == "🔗 Referal")
